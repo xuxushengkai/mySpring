@@ -9,9 +9,7 @@ package com.sjj.spring.formework.webmvc.beans.context;
 public class SJBeanPostProcessor {
 
     //为在 Bean 的初始化前提供回调入口
-    public Object postProcessBeforeInitialization(Object bean, String beanName) {
-        return bean;
-    }
+    public Object postProcessBeforeInitialization(Object bean, String beanName) { return bean; }
 
     //为在 Bean 的初始化之后提供回调入口
     public Object postProcessAfterInitialization(Object bean, String beanName) {
