@@ -1,5 +1,7 @@
 package com.sjj.spring.formework.webmvc.beans.context;
 
+import com.sjj.spring.formework.webmvc.servlet.SJApplicationContext;
+
 /**
  * @ClassName SJApplicationContextAware
  * 通过解耦方式获得 IOC 容器的顶层设计

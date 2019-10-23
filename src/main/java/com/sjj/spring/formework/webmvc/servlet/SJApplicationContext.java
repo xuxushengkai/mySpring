@@ -1,4 +1,4 @@
-package com.sjj.spring.formework.webmvc.beans.context;
+package com.sjj.spring.formework.webmvc.servlet;
 
 import com.sjj.spring.formework.webmvc.annotation.SJAutoWired;
 import com.sjj.spring.formework.webmvc.annotation.SJController;
@@ -6,6 +6,7 @@ import com.sjj.spring.formework.webmvc.annotation.SJService;
 import com.sjj.spring.formework.webmvc.beans.config.SJBeanDefinition;
 import com.sjj.spring.formework.webmvc.beans.config.SJBeanDefinitionReader;
 import com.sjj.spring.formework.webmvc.beans.config.SJBeanWrapper;
+import com.sjj.spring.formework.webmvc.beans.context.SJBeanPostProcessor;
 import com.sjj.spring.formework.webmvc.beans.support.SJDefaultListableBeanFactory;
 import com.sjj.spring.formework.webmvc.core.SJBeanFactory;
 
@@ -34,7 +35,7 @@ public class SJApplicationContext extends SJDefaultListableBeanFactory implement
 
 
     //定位路径
-    public SJApplicationContext(String[] configLocations) {
+    public SJApplicationContext(String... configLocations) {
         this.configLocations = configLocations;
         try {
             refresh();
