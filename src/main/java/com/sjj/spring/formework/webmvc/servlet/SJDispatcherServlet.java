@@ -146,7 +146,7 @@ public class SJDispatcherServlet extends HttpServlet {
         //解决页面名字和模板文件关联的问题
         String templateRoot =  context.getConfig().getProperty("templateRoot");
         String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getFile();
-        File templateRootDir = new File(templateRoot);
+        File templateRootDir = new File(templateRootPath);
 
         for(File template : templateRootDir.listFiles()){
             //遍历文件放入视图转换器中
