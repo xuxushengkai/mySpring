@@ -120,7 +120,7 @@ public class SJDispatcherServlet extends HttpServlet {
                     String regex = ("/"+baseUrl+requestMapping.value().replaceAll("\\*",".*")).replace("/*","/");
                     Pattern pattern = Pattern.compile(regex);
                     //加入handlermapping中
-                    this.handlerMappings.add(new SJHandlerMapping(pattern,controller,method));
+                    this.handlerMappings.add(new SJHandlerMapping(controller, method, pattern));
                     log.info("Mapping: " + regex + " , " + method);
                 }
 
@@ -164,7 +164,7 @@ public class SJDispatcherServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try{
             //转发
-            doDipatrh(req,resp);
+            doDispatch(req,resp);
         }catch (Exception e){
             resp.getWriter().write("<font size='25' color='blue'>500 Exception</font><br/>Details:<br/>" + Arrays.toString(e.getStackTrace()
             ).replaceAll("\\[|\\]","").replaceAll("\\s","\r\n") + "<font color='green'><i>Copyright@GupaoEDU</i></font>");
@@ -174,7 +174,7 @@ public class SJDispatcherServlet extends HttpServlet {
 
     }
 
-    private void doDipatrh(HttpServletRequest req, HttpServletResponse resp) throws  Exception{
+    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws  Exception{
 
         //根据用户请求的URL来获得一个Handler
         SJHandlerMapping handler = getHandler(req);
@@ -230,7 +230,7 @@ public class SJDispatcherServlet extends HttpServlet {
         //转换路径
         url = url.replace(contextPath,"").replaceAll("/+","/");
         for(SJHandlerMapping handler: this.handlerMappings){
-            Matcher matcher = handler.getpattern.matcher(url);
+            Matcher matcher = handler.getPattern().matcher(url);
             if(!matcher.matches()){continue;}
             return handler;
         }

@@ -6,7 +6,8 @@ public class SJModelAndView {
     private String viewName;
     private Map<String,?> model;
 
-    public SJModelAndView(String s) {
+    public SJModelAndView(String viewName) {
+        this(viewName,null);
     }
 
     public SJModelAndView(String viewName, Map<String, ?> model) {
@@ -18,7 +19,15 @@ public class SJModelAndView {
         return viewName;
     }
 
+    public void setViewName(String viewName) {
+        this.viewName = viewName;
+    }
+
     public Map<String, ?> getModel() {
         return model;
+    }
+
+    public void setModel(Map<String, ?> model) {
+        this.model = model;
     }
 }
