@@ -35,7 +35,7 @@ public class MyAction {
 
     @SJRequestMapping("/add*.json")
     public SJModelAndView add(HttpServletRequest request, HttpServletResponse response,
-                              @SJRequestParam("name") String name,@SJRequestParam("addr") String addr){
+                              @SJRequestParam("name") String name,@SJRequestParam("addr") String addr) throws Exception {
         String result =  modifyService.add(name,addr);
         return out(response,result);
     }

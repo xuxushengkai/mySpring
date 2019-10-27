@@ -154,6 +154,7 @@ public class SJApplicationContext extends SJDefaultListableBeanFactory implement
         Object instance = null;
         String className = beanDefinition.getBeanClassName();
         //因为根据 Class 才能确定一个类是否有实例
+        System.out.println("classname ==" +className);
         try {
             if (this.factoryBeanObjectCache.containsKey(className)) {
                 instance = this.factoryBeanInstanceCache.get(className);
