@@ -57,7 +57,7 @@ public class SJHandlerAdapter {
         //3、构造实参列表
         Object [] paramValues = new Object[paramTypes.length];
         for(Map.Entry<String,String[]> param : reqParameterMap.entrySet()){
-            String value = Arrays.toString(param.getValue()).replace("\\[|\\]","").replaceAll("\\s","");
+            String value = Arrays.toString(param.getValue()).replaceAll("\\[|\\]","").replaceAll("\\s","");
 
             if(!paramMapping.containsKey(param.getKey())){ continue;}
 

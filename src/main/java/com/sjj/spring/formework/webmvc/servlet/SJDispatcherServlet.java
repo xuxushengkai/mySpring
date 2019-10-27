@@ -117,7 +117,7 @@ public class SJDispatcherServlet extends HttpServlet {
                     }
 
                     SJRequestMapping requestMapping = method.getAnnotation(SJRequestMapping.class);
-                    String regex = ("/"+baseUrl+requestMapping.value().replaceAll("\\*",".*")).replace("/*","/");
+                    String regex = ("/" + baseUrl + "/" + requestMapping.value().replaceAll("\\*",".*")).replaceAll("/+", "/");
                     Pattern pattern = Pattern.compile(regex);
                     //加入handlermapping中
                     this.handlerMappings.add(new SJHandlerMapping(controller, method, pattern));

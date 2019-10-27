@@ -1,5 +1,10 @@
 package com.sjj.spring.formework.webmvc.servlet;
 
+import com.sjj.spring.formework.aop.SJAopConfig;
+import com.sjj.spring.formework.aop.SJAopProxy;
+import com.sjj.spring.formework.aop.SJCGlibAopProxy;
+import com.sjj.spring.formework.aop.SJJdkDynamicAopProxy;
+import com.sjj.spring.formework.aop.support.SJAdvisedSupport;
 import com.sjj.spring.formework.webmvc.annotation.SJAutoWired;
 import com.sjj.spring.formework.webmvc.annotation.SJController;
 import com.sjj.spring.formework.webmvc.annotation.SJService;
@@ -28,10 +33,9 @@ public class SJApplicationContext extends SJDefaultListableBeanFactory implement
     private SJBeanDefinitionReader reader;
 
     //单例的IOC容器缓存
-    private Map<String,Object> factoryBeanObjectCache = new ConcurrentHashMap<String, Object>();
+    private Map<String, Object> factoryBeanObjectCache = new ConcurrentHashMap<String, Object>();
     //通用的IOC容器
-    private Map<String,SJBeanWrapper> factoryBeanInstanceCache = new ConcurrentHashMap<String, SJBeanWrapper>();
-
+    private Map<String, SJBeanWrapper> factoryBeanInstanceCache = new ConcurrentHashMap<String, SJBeanWrapper>();
 
 
     //定位路径
@@ -95,17 +99,19 @@ public class SJApplicationContext extends SJDefaultListableBeanFactory implement
             //生成通知时间
             SJBeanPostProcessor beanPostProcessor = new SJBeanPostProcessor();
             Object instance = instantiateBean(beanDefinition);
-            if(null == instance){return null;}
+            if (null == instance) {
+                return null;
+            }
             //在实例初始化以前调用一次
-            beanPostProcessor.postProcessBeforeInitialization(instance,beanName);
+            beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
             SJBeanWrapper beanWrapper = new SJBeanWrapper(instance);
-            this.factoryBeanInstanceCache.put(beanName,beanWrapper);
+            this.factoryBeanInstanceCache.put(beanName, beanWrapper);
             //在实例初始化以后调用一次
-            beanPostProcessor.postProcessBeforeInitialization(instance,beanName);
-            populateBean(beanName,instance);
+            beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
+            populateBean(beanName, instance);
             //通过这样一调用，相当于给我们自己留有了可操作的空间
             return this.factoryBeanInstanceCache.get(beanName).getWrappedInstance();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -114,24 +120,28 @@ public class SJApplicationContext extends SJDefaultListableBeanFactory implement
     private void populateBean(String beanName, Object instance) {
         Class clazz = instance.getClass();
         //不是所有牛奶都叫特仑苏
-        if(!(clazz.isAnnotationPresent(SJController.class) || (clazz.isAnnotationPresent(SJService.class)))){
+        if (!(clazz.isAnnotationPresent(SJController.class) || (clazz.isAnnotationPresent(SJService.class)))) {
             return;
         }
         Field[] fields = clazz.getDeclaredFields();
         //遍历注入
-        for(Field field:fields){
-            if(!field.isAnnotationPresent(SJAutoWired.class)){continue;}
+        for (Field field : fields) {
+            if (!field.isAnnotationPresent(SJAutoWired.class)) {
+                continue;
+            }
             SJAutoWired autoWired = field.getAnnotation(SJAutoWired.class);
             String autowiredBeanName = autoWired.value().trim();
-            if("".equals(autowiredBeanName)){
+            if ("".equals(autowiredBeanName)) {
                 //注入名称为空
                 autowiredBeanName = field.getType().getName();
             }
             field.setAccessible(true);
             try {
                 //为什么会为NULL，先留个坑
-                if(this.factoryBeanInstanceCache.get(autowiredBeanName) == null){ continue; }
-                field.set(instance,this.factoryBeanInstanceCache.get(autowiredBeanName).getWrappedInstance());
+                if (this.factoryBeanInstanceCache.get(autowiredBeanName) == null) {
+                    continue;
+                }
+                field.set(instance, this.factoryBeanInstanceCache.get(autowiredBeanName).getWrappedInstance());
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -144,20 +154,51 @@ public class SJApplicationContext extends SJDefaultListableBeanFactory implement
         Object instance = null;
         String className = beanDefinition.getBeanClassName();
         //因为根据 Class 才能确定一个类是否有实例
-        try{
-            if(this.factoryBeanObjectCache.containsKey(className)){
+        try {
+            if (this.factoryBeanObjectCache.containsKey(className)) {
                 instance = this.factoryBeanInstanceCache.get(className);
-            }else{
+            } else {
                 Class<?> clazz = Class.forName(className);
                 instance = clazz.newInstance();
-                this.factoryBeanObjectCache.put(beanDefinition.getFactoryBeanName(),instance);
+
+                SJAdvisedSupport config = instantionAopConfig(beanDefinition);
+                config.setTargetClass(clazz);
+                config.setTarget(instance);
+
+                if (config.pointCutmatch()) {
+                    instance = createProxy(config).getProxy();
+                }
+
+                this.factoryBeanObjectCache.put(beanDefinition.getFactoryBeanName(), instance);
             }
             return instance;
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
 
+    }
+
+    private SJAopProxy createProxy(SJAdvisedSupport config) {
+        Class targetClass = config.getTargetClass();
+        if(targetClass.getInterfaces().length > 0){
+            //加载配置到jdk代理中
+            return new SJJdkDynamicAopProxy(config);
+        }
+        return new SJCGlibAopProxy(config);
+    }
+
+    //加入切面信息
+    private SJAdvisedSupport instantionAopConfig(SJBeanDefinition beanDefinition) {
+
+        SJAopConfig config = new SJAopConfig();
+        config.setPointCut(reader.getConfig().getProperty("pointCut"));
+        config.setAspectClass(reader.getConfig().getProperty("aspectClass"));
+        config.setAspectBefore(reader.getConfig().getProperty("aspectBefore"));
+        config.setAspectAfter(reader.getConfig().getProperty("aspectAfter"));
+        config.setAspectAfterThrow(reader.getConfig().getProperty("aspectAfterThrow"));
+        config.setAspectAfterThrowingName(reader.getConfig().getProperty("aspectAfterThrowingName"));
+        return new SJAdvisedSupport(config);
     }
 
     //依赖注入，从这里开始，通过读取 BeanDefinition 中的信息
@@ -171,17 +212,17 @@ public class SJApplicationContext extends SJDefaultListableBeanFactory implement
         return getBean(beanClass.getName());
     }
 
-    public String[] getBeanDefinitionNames(){
+    public String[] getBeanDefinitionNames() {
         return this.beanDefinitionMap.keySet().toArray(new String[this.beanDefinitionMap.size()]);
     }
 
     //获取长度
-    public int getBeanDefinitionCount(){
+    public int getBeanDefinitionCount() {
         return this.beanDefinitionMap.size();
     }
 
     //获取配置
-    public Properties getConfig(){
+    public Properties getConfig() {
         return this.reader.getConfig();
     }
 }

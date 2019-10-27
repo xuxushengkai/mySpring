@@ -7,7 +7,7 @@ public interface IModifyService {
     /**
     * 新增
     **/
-   String add(String name,String addr);
+   String add(String name,String addr) throws Exception;
 
    /**
    * 修改
