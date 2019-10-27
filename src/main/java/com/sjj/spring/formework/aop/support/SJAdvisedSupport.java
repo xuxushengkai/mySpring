@@ -72,6 +72,7 @@ public class SJAdvisedSupport {
         pointCutClassPattern = Pattern.compile("class " + pointCutForClass.substring(pointCutForClass.lastIndexOf(" ") + 1));
         methodCache = new HashMap<Method,List<Object>>();
         Pattern pattern = Pattern.compile(pointCut);
+        System.out.println(pattern);
 
         try {
             Class aspectClass  = Class.forName(config.getAspectClass());

@@ -66,18 +66,23 @@ public class SJDispatcherServlet extends HttpServlet {
     }
 
 
-    private void initFlashMapManager(SJApplicationContext context) { }
+    private void initFlashMapManager(SJApplicationContext context) {
+    }
 
-    private void initRequestToViewNameTranslator(SJApplicationContext context) { }
+    private void initRequestToViewNameTranslator(SJApplicationContext context) {
+    }
 
-    private void initHandlerExceptionResolvers(SJApplicationContext context) { }
+    private void initHandlerExceptionResolvers(SJApplicationContext context) {
+    }
 
-    private void initThemeResolver(SJApplicationContext context) { }
+    private void initThemeResolver(SJApplicationContext context) {
+    }
 
-    private void initLocalResolver(SJApplicationContext context) { }
+    private void initLocalResolver(SJApplicationContext context) {
+    }
 
-    private void initMultipartResolver(SJApplicationContext context) { }
-
+    private void initMultipartResolver(SJApplicationContext context) {
+    }
 
 
     //将 Controller 中配置的 RequestMapping 和 Method 进行一一对应
@@ -85,24 +90,25 @@ public class SJDispatcherServlet extends HttpServlet {
         //按照我们通常的理解应该是一个 Map
         // Map<String,Method> map;
         // map.put(url,Method)
-
+        System.out.println("context==" + context);
         //首先从容器中取到所有的实例
         String[] beanNames = context.getBeanDefinitionNames();
-        try{
-            for(String beanName : beanNames){
+        try {
+            for (String beanName : beanNames) {
                 //到了 MVC 层，对外提供的方法只有一个 getBean 方法
                 //返回的对象不是 BeanWrapper，怎么办？
                 Object controller = context.getBean(beanName);
                 //Object object = SJAouUtils.getTargetObject(proxy);
+
                 Class<?> clazz = controller.getClass();
 
-                if(!clazz.isAnnotationPresent(SJController.class)){
+                if (!clazz.isAnnotationPresent(SJController.class)) {
                     //只注入url和controller的关系
                     continue;
                 }
                 String baseUrl = "";
 
-                if(clazz.isAnnotationPresent(SJRequestMapping.class)){
+                if (clazz.isAnnotationPresent(SJRequestMapping.class)) {
                     //拿到requestMapping的url
                     SJRequestMapping requestMapping = clazz.getAnnotation(SJRequestMapping.class);
                     baseUrl = requestMapping.value();
@@ -110,14 +116,14 @@ public class SJDispatcherServlet extends HttpServlet {
 
                 //扫描所有的 public 方法
                 Method[] methods = clazz.getMethods();
-                for(Method method:methods){
-                    if(!method.isAnnotationPresent(SJRequestMapping.class)){
+                for (Method method : methods) {
+                    if (!method.isAnnotationPresent(SJRequestMapping.class)) {
                         //再次判断是否是requestMapping修饰的method方法
                         continue;
                     }
 
                     SJRequestMapping requestMapping = method.getAnnotation(SJRequestMapping.class);
-                    String regex = ("/" + baseUrl + "/" + requestMapping.value().replaceAll("\\*",".*")).replaceAll("/+", "/");
+                    String regex = ("/" + baseUrl + "/" + requestMapping.value().replaceAll("\\*", ".*")).replaceAll("/+", "/");
                     Pattern pattern = Pattern.compile(regex);
                     //加入handlermapping中
                     this.handlerMappings.add(new SJHandlerMapping(controller, method, pattern));
@@ -125,7 +131,7 @@ public class SJDispatcherServlet extends HttpServlet {
                 }
 
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -135,20 +141,20 @@ public class SJDispatcherServlet extends HttpServlet {
         //在初始化阶段，我们能做的就是，将这些参数的名字或者类型按一定的顺序保存下来
         //因为后面用反射调用的时候，传的形参是一个数组
         //可以通过记录这些参数的位置 index,挨个从数组中填值，这样的话，就和参数的顺序无关了
-        for(SJHandlerMapping handlerMapping: this.handlerMappings){
+        for (SJHandlerMapping handlerMapping : this.handlerMappings) {
             //每一个方法有一个参数里列表，那么之类保存的是形参里列表
-            this.handlerAdapters.put(handlerMapping,new SJHandlerAdapter());
+            this.handlerAdapters.put(handlerMapping, new SJHandlerAdapter());
         }
     }
 
     private void initViewResolvers(SJApplicationContext context) {
         //在页面敲一个 http://localhost/first.html
         //解决页面名字和模板文件关联的问题
-        String templateRoot =  context.getConfig().getProperty("templateRoot");
+        String templateRoot = context.getConfig().getProperty("templateRoot");
         String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getFile();
         File templateRootDir = new File(templateRootPath);
 
-        for(File template : templateRootDir.listFiles()){
+        for (File template : templateRootDir.listFiles()) {
             //遍历文件放入视图转换器中
             this.viewResolvers.add(new SJViewResolver(templateRoot));
         }
@@ -157,54 +163,58 @@ public class SJDispatcherServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        this.doPost(req,resp);
+        this.doPost(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try{
+        try {
             //转发
-            doDispatch(req,resp);
-        }catch (Exception e){
+            doDispatch(req, resp);
+        } catch (Exception e) {
             resp.getWriter().write("<font size='25' color='blue'>500 Exception</font><br/>Details:<br/>" + Arrays.toString(e.getStackTrace()
-            ).replaceAll("\\[|\\]","").replaceAll("\\s","\r\n") + "<font color='green'><i>Copyright@GupaoEDU</i></font>");
+            ).replaceAll("\\[|\\]", "").replaceAll("\\s", "\r\n") + "<font color='green'><i>Copyright@GupaoEDU</i></font>");
             e.printStackTrace();
         }
 
 
     }
 
-    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws  Exception{
+    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 
         //根据用户请求的URL来获得一个Handler
         SJHandlerMapping handler = getHandler(req);
-        if(handler == null){
-            processDispatchResult(req,resp,new SJModelAndView("404"));
+        if (handler == null) {
+            processDispatchResult(req, resp, new SJModelAndView("404"));
             return;
         }
         //根据handler获取adapter
         SJHandlerAdapter ha = getHandlerAdapter(handler);
 
         //这一步只是调用方法，得到返回值
-        SJModelAndView mv = ha.handle(req,resp,handler);
+        SJModelAndView mv = ha.handle(req, resp, handler);
 
         //这一步才是真的输出
-        processDispatchResult(req,resp,mv);
+        processDispatchResult(req, resp, mv);
 
     }
 
     private void processDispatchResult(HttpServletRequest req, HttpServletResponse resp, SJModelAndView mv) throws Exception {
         //调用 viewResolver 的 resolveView 方法
-        if(null == mv){return;}
+        if (null == mv) {
+            return;
+        }
 
-        if(this.viewResolvers.isEmpty()){return;}
+        if (this.viewResolvers.isEmpty()) {
+            return;
+        }
 
-        if(this.viewResolvers != null){
-            for(SJViewResolver viewResolver : this.viewResolvers){
+        if (this.viewResolvers != null) {
+            for (SJViewResolver viewResolver : this.viewResolvers) {
                 //根据视图名称转换为视图
-                SJView view = viewResolver.resolveViewName(mv.getViewName(),null);
-                if(view != null){
-                    view.render(mv.getModel(),req,resp);
+                SJView view = viewResolver.resolveViewName(mv.getViewName(), null);
+                if (view != null) {
+                    view.render(mv.getModel(), req, resp);
                     return;
                 }
             }
@@ -213,25 +223,31 @@ public class SJDispatcherServlet extends HttpServlet {
 
     //获取视图适配器
     private SJHandlerAdapter getHandlerAdapter(SJHandlerMapping handler) {
-        if(this.handlerAdapters.isEmpty()){return null;}
+        if (this.handlerAdapters.isEmpty()) {
+            return null;
+        }
         SJHandlerAdapter ha = this.handlerAdapters.get(handler);
-        if(ha.supports(handler)){
+        if (ha.supports(handler)) {
             return ha;
         }
         return null;
     }
 
     private SJHandlerMapping getHandler(HttpServletRequest req) {
-        if(this.handlerMappings.isEmpty()){return null;}
+        if (this.handlerMappings.isEmpty()) {
+            return null;
+        }
 
         String url = req.getRequestURI();
         String contextPath = req.getContextPath();
 
         //转换路径
-        url = url.replace(contextPath,"").replaceAll("/+","/");
-        for(SJHandlerMapping handler: this.handlerMappings){
+        url = url.replace(contextPath, "").replaceAll("/+", "/");
+        for (SJHandlerMapping handler : this.handlerMappings) {
             Matcher matcher = handler.getPattern().matcher(url);
-            if(!matcher.matches()){continue;}
+            if (!matcher.matches()) {
+                continue;
+            }
             return handler;
         }
         return null;

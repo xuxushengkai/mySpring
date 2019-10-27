@@ -1,4 +1,4 @@
-package com.sjj.spring.formework.aop.aspect;
+package com.sjj.spring.demo.aspect;
 
 import com.sjj.spring.formework.aop.intercept.SJJoinPoint;
 import lombok.extern.slf4j.Slf4j;

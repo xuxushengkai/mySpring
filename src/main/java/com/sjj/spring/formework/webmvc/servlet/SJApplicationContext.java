@@ -164,10 +164,13 @@ public class SJApplicationContext extends SJDefaultListableBeanFactory implement
                 SJAdvisedSupport config = instantionAopConfig(beanDefinition);
                 config.setTargetClass(clazz);
                 config.setTarget(instance);
+                System.out.println("config=" + config);
 
                 if (config.pointCutmatch()) {
                     instance = createProxy(config).getProxy();
                 }
+
+                System.out.println("instance == "+instance);
 
                 this.factoryBeanObjectCache.put(beanDefinition.getFactoryBeanName(), instance);
             }
